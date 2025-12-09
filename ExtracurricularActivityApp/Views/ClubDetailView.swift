@@ -4,76 +4,54 @@
 //
 //  Created by Shyryn Akylbaeva on 08.12.2025.
 //
-
 internal import SwiftUI
 
 struct ClubDetailView: View {
-    let club: Club
 
+    let club: Club
     @EnvironmentObject var enrollmentVM: EnrollmentViewModel
     @EnvironmentObject var authVM: AuthViewModel
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text(club.title)
-                .font(.largeTitle.bold())
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
 
-            Text(club.description)
-                .padding()
+                // Атауы
+                Text(club.title)
+                    .font(.largeTitle.bold())
 
-            HStack {
-                Text("Өтетін орын:")
-                Spacer()
-                Text(club.place)
-            }
+                // Орын және күні
+                Text("\(club.place) • \(club.weeklyDay)")
+                    .font(.headline)
+                    .foregroundColor(.gray)
 
-            HStack {
-                Text("Күні:")
-                Spacer()
-                Text(club.weeklyDay)
-            }
+                // Сипаттамасы
+                Text(club.description)
+                    .font(.body)
 
-            HStack {
-                Text("Сыйымдылығы:")
-                Spacer()
-                Text("\(club.capacity) адам")
-            }
+                // Қатысушылар саны
+                Text("Қатысушылар: \(enrollmentVM.countForClub(club.id)) / \(club.capacity)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
 
-            HStack {
-                Text("Қатысушылар:")
-                Spacer()
-                Text("\(enrollmentVM.count(for: club.id))")
-            }
-
-            let userId = authVM.currentUserEmail ?? ""
-
-            if enrollmentVM.isEnrolled(userId: userId, clubId: club.id) {
-                Button("Жазылымнан бас тарту") {
-                    enrollmentVM.unenroll(userId: userId, clubId: club.id)
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.red)
-                .foregroundColor(.white)
-                .cornerRadius(10)
-
-            } else {
-                Button("Жазылу") {
-                    if enrollmentVM.count(for: club.id) < club.capacity {
-                        enrollmentVM.enroll(userId: userId, clubId: club.id)
+                // Тіркелу батырмасы (мысалы)
+                Button(action: {
+                    if let email = authVM.currentUserEmail {
+                        enrollmentVM.enroll(userId: email, clubId: club.id)
                     }
+                }) {
+                    Text("Тіркелу")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(10)
-            }
 
-            Spacer()
+            .padding()
         }
-        .padding()
         .navigationTitle(club.title)
-        
+        .navigationBarTitleDisplayMode(.inline)
     }
+}
 }

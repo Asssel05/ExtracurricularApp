@@ -9,36 +9,60 @@ import Foundation
 import Combine
 
 final class EnrollmentViewModel: ObservableObject {
-
     @Published var enrollments: [Enrollment] = []
+    private let storageKey = "app.enrollments.v1"
 
+    init() {
+        loadFromStorage()
+    }
+
+    // enroll
     func enroll(userId: String, clubId: String) {
-        let item = Enrollment(userId: userId, clubId: clubId, registeredAt: Date())
-        enrollments.append(item)
+        // алдын ала код: capacity тексеру т.б. қосуға болады
+        let e = Enrollment(id: UUID().uuidString, userId: userId, clubId: clubId, registeredAt: Date())
+        enrollments.append(e)
+        saveToStorage()
     }
 
     func unenroll(userId: String, clubId: String) {
         enrollments.removeAll { $0.userId == userId && $0.clubId == clubId }
+        saveToStorage()
     }
 
     func isEnrolled(userId: String, clubId: String) -> Bool {
         enrollments.contains { $0.userId == userId && $0.clubId == clubId }
     }
 
-    func count(for clubId: String) -> Int {
+    func countForClub(_ clubId: String) -> Int {
         enrollments.filter { $0.clubId == clubId }.count
     }
-    
-    func enrolledClubs(for userId: String) -> [Enrollment] {
-        enrollments.filter { $0.userId == userId }
+
+    // Storage
+    func saveToStorage() {
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try encoder.encode(enrollments)
+            UserDefaults.standard.set(data, forKey: storageKey)
+        } catch {
+            print("Enrollment save error:", error)
+        }
     }
-    // ViewModels/EnrollmentViewModel.swift ішінде
+
+    func loadFromStorage() {
+        guard let data = UserDefaults.standard.data(forKey: storageKey) else { return }
+        do {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let arr = try decoder.decode([Enrollment].self, from: data)
+            self.enrollments = arr
+        } catch {
+            print("Enrollment load error:", error)
+        }
+    }
     func enrollmentsFor(userId: String) -> [Enrollment] {
         enrollments.filter { $0.userId == userId }
     }
 
+    
 }
-
-
-
-

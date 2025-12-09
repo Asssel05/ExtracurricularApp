@@ -3,24 +3,49 @@ internal import SwiftUI
 struct AdminMenuView: View {
     @EnvironmentObject var clubVM: ClubListViewModel
     @EnvironmentObject var adminAuth: AdminAuthViewModel
+    @EnvironmentObject var enrollmentVM: EnrollmentViewModel
 
     var body: some View {
         VStack {
             List {
                 ForEach(clubVM.clubs) { club in
                     NavigationLink(destination: EditClubView(club: club)) {
-                        VStack(alignment: .leading) {
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            
                             Text(club.title)
                                 .font(.headline)
-                            Text(club.place)
+
+                            Text("Өтетін жері: \(club.place)")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
+
+                            Text("Жетекшісі: \(club.instructor)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            // Басталу уақыты — FORMAT қолданамыз
+                            Text("Басталу уақыты: \(club.startTime.toReadableDayAndTime())")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            // Тіркелген оқушылар саны
+                            HStack {
+                                Image(systemName: "person.3.fill")
+                                    .foregroundColor(.blue)
+
+                                Text("Тіркелгендер: \(enrollmentVM.countForClub(club.id)) оқушы")
+                                    .font(.subheadline)
+                            }
+                            .padding(.top, 4)
                         }
+                        .padding(.vertical, 6)
                     }
                 }
             }
             .listStyle(.insetGrouped)
 
+            // Үйірме қосу
             NavigationLink(destination: AddClubView()) {
                 Text("Жаңа үйірме қосу")
                     .frame(maxWidth: .infinity)
@@ -32,9 +57,9 @@ struct AdminMenuView: View {
             }
             .padding(.bottom, 10)
 
-            // 🔥 АДМИН ШЫҒУ БАТЫРМАСЫ
+            // Шығу батырмасы
             Button("Шығу (Админ)") {
-                adminAuth.logout()   // ← ДҰРЫСЫ ОСЫ!
+                adminAuth.logout()
             }
             .buttonStyle(DSSecondaryButton())
             .foregroundColor(.red)
@@ -43,6 +68,5 @@ struct AdminMenuView: View {
         }
         .navigationTitle("Админ панель")
         .navigationBarTitleDisplayMode(.inline)
-        
     }
 }

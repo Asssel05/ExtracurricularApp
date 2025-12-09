@@ -9,52 +9,62 @@ internal import SwiftUI
 
 struct AddClubView: View {
     @EnvironmentObject var clubVM: ClubListViewModel
-    
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.presentationMode) var presentationMode
 
-    @State private var title = ""
-    @State private var description = ""
-    @State private var place = ""
-    @State private var weeklyDay = ""
-    @State private var capacity = ""
-    
+    @State private var title: String = ""
+    @State private var description: String = ""
+    @State private var place: String = ""
+    @State private var weeklyDay: String = "Дүйсенбі"
+    @State private var startTime: Date = Date()
+    @State private var capacity: String = "10"
+    @State private var instructor: String = ""
+
     var body: some View {
         Form {
-            Section(header: Text("Үйірме атауы")) {
+            Section(header: Text("Негізгі")) {
                 TextField("Атауы", text: $title)
+                TextField("Сипаттамасы", text: $description)
+                TextField("Орын (кабинет)", text: $place)
+                TextField("Жетекші", text: $instructor)
             }
 
-            Section(header: Text("Сипаттамасы")) {
-                TextField("Сипаттама", text: $description)
+            Section(header: Text("Күн және уақыт")) {
+                Picker("Күні", selection: $weeklyDay) {
+                    Text("Дүйсенбі").tag("Дүйсенбі")
+                    Text("Сейсенбі").tag("Сейсенбі")
+                    Text("Сәрсенбі").tag("Сәрсенбі")
+                    Text("Бейсенбі").tag("Бейсенбі")
+                    Text("Жұма").tag("Жұма")
+                    Text("Сенбі").tag("Сенбі")
+                    Text("Жексенбі").tag("Жексенбі")
+                }
+                DatePicker("Басталатын уақыт", selection: $startTime, displayedComponents: [.hourAndMinute])
+                    .datePickerStyle(WheelDatePickerStyle())
             }
 
-            Section(header: Text("Орын / Күні")) {
-                TextField("Өтетін жер", text: $place)
-                TextField("Күні (мысалы: Сейсенбі)", text: $weeklyDay)
-            }
-
-            Section(header: Text("Сыйымдылық")) {
-                TextField("Адам саны", text: $capacity)
+            Section(header: Text("Қабілет")) {
+                TextField("Капасити", text: $capacity)
                     .keyboardType(.numberPad)
             }
 
-            Button("Сақтау") {
+            Button("Үйірме қосу") {
+                let cap = Int(capacity) ?? 10
+                // батырма ішіндегі club жасауда:
                 let club = Club(
                     title: title,
                     description: description,
                     place: place,
                     weeklyDay: weeklyDay,
-                    startTime: Date(),
-                    capacity: Int(capacity) ?? 0,
-                    imageName: nil
+                    startTime: startTime,    // Date
+                    capacity: cap,
+                    imageName: nil,
+                    instructor: instructor
                 )
                 clubVM.addClub(club)
-                dismiss()
+                presentationMode.wrappedValue.dismiss()
             }
-            .frame(maxWidth: .infinity)
-            .padding()
+            .disabled(title.isEmpty)
         }
-        .navigationTitle("Үйірме қосу")
-        .withBackButton()
+        .navigationTitle("Жаңа үйірме қосу")
     }
 }

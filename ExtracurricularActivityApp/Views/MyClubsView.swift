@@ -4,7 +4,6 @@
 //
 //  Created by Shyryn Akylbaeva on 08.12.2025.
 //
-
 internal import SwiftUI
 
 struct MyClubsView: View {
@@ -36,7 +35,7 @@ struct MyClubsView: View {
                         List {
                             ForEach(myEnrolls) { enrollment in
                                 if let club = clubVM.clubs.first(where: { $0.id == enrollment.clubId }) {
-                                    MyClubRow(club: club, enrollment: enrollment)
+                                    MyClubRow(club: club, enrollment: enrollment)   // ← енді жұмыс істейді
                                 }
                             }
                             .onDelete { offsets in
@@ -65,6 +64,10 @@ struct MyClubsView: View {
     }
 }
 
+/////////////////////////////////////////////////////////////////////////
+// 👇 ТӨМЕНГЕ МІНЕ ОСЫ КОДТЫ ҚОСАСЫҢ (жаңа файл ашпай-ақ болады)
+/////////////////////////////////////////////////////////////////////////
+
 struct MyClubRow: View {
     let club: Club
     let enrollment: Enrollment
@@ -75,13 +78,17 @@ struct MyClubRow: View {
                 .foregroundColor(.blue)
                 .font(.system(size: 24))
 
-            VStack(alignment: .leading) {
-                Text(club.title).font(.headline)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(club.title)
+                    .font(.headline)
+
                 Text("\(club.place) • \(club.weeklyDay)")
-                    .font(.subheadline).foregroundColor(.secondary)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
 
                 Text("Тіркелген: \(enrollment.registeredAt.formatted(date: .numeric, time: .shortened))")
-                    .font(.caption).foregroundColor(.gray)
+                    .font(.caption)
+                    .foregroundColor(.gray)
             }
 
             Spacer()

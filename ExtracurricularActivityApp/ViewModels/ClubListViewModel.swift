@@ -6,59 +6,118 @@
 //
 
 import Foundation
-import Combine
 internal import SwiftUI
+import Combine
 
 final class ClubListViewModel: ObservableObject {
+    @Published var clubs: [Club] = []
 
-    @Published var clubs: [Club] = [] {
-        didSet {
+    private let storageKey = "app.clubs.v1"
+
+    init() {
+        loadFromStorage()
+        if clubs.isEmpty {
+            loadSample()
             saveToStorage()
         }
     }
 
-    private let storageKey = "clubs_storage"
-
-    init() {
-        loadFromStorage()
-        if clubs.isEmpty { loadSample() }
-    }
-
+    // MARK: - Sample
     func loadSample() {
+        // мысал ретінде бүгінгі дата + әртүрлі уақыттар
+        let calendar = Calendar.current
+        var comps = calendar.dateComponents([.year, .month, .day], from: Date())
+
+        // Робот техника — бүгін сағат 16:00
+        comps.hour = 16
+        comps.minute = 0
+        let t1 = calendar.date(from: comps) ?? Date()
+
+        // Сурет салу — ертең сағат 18:30
+        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: Date()) {
+            var comps2 = calendar.dateComponents([.year, .month, .day], from: tomorrow)
+            comps2.hour = 18
+            comps2.minute = 30
+            let t2 = calendar.date(from: comps2) ?? tomorrow
+
+            clubs = [
+                Club(
+                    title: "Робототехника",
+                    description: "Робот құрастыру және бағдарламалау",
+                    place: "101 кабинет",
+                    weeklyDay: "Дүйсенбі",
+                    startTime: t1,
+                    capacity: 12,
+                    imageName: nil,
+                    instructor: "Бекежан Қ."
+                ),
+                Club(
+                    title: "Сурет салу",
+                    description: "Қылқалам, акварель, композиция",
+                    place: "Студия",
+                    weeklyDay: "Сәрсенбі",
+                    startTime: t2,
+                    capacity: 18,
+                    imageName: nil,
+                    instructor: "Алия М."
+                )
+            ]
+            return
+        }
+
+        // Қосымша fallback
         clubs = [
-            Club(title: "Робототехника", description: "Робот құрастыру және бағдарламалау", place: "101 кабинет", weeklyDay: "Дүйсенбі", startTime: Date(), capacity: 12, imageName: nil),
-            Club(title: "Сурет салу", description: "Қылқалам, акварель, композиция", place: "Студия", weeklyDay: "Сәрсенбі", startTime: Date(), capacity: 18, imageName: nil)
+            Club(
+                title: "Робототехника",
+                description: "Робот құрастыру және бағдарламалау",
+                place: "101 кабинет",
+                weeklyDay: "Дүйсенбі",
+                startTime: t1,
+                capacity: 12,
+                imageName: nil,
+                instructor: "Бекежан Қ."
+            )
         ]
     }
 
-    // MARK: - ADD CLUB
+    // MARK: - Storage
+    func saveToStorage() {
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try encoder.encode(clubs)
+            UserDefaults.standard.set(data, forKey: storageKey)
+        } catch {
+            print("ClubListViewModel save error:", error)
+        }
+    }
+
+    func loadFromStorage() {
+        guard let data = UserDefaults.standard.data(forKey: storageKey) else { return }
+        do {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let arr = try decoder.decode([Club].self, from: data)
+            self.clubs = arr
+        } catch {
+            print("ClubListViewModel load error:", error)
+        }
+    }
+
+    // MARK: - CRUD
     func addClub(_ club: Club) {
         clubs.append(club)
+        saveToStorage()
     }
 
-    // MARK: - DELETE CLUB
-    func deleteClub(at offsets: IndexSet) {
-        clubs.remove(atOffsets: offsets)
-    }
-
-    // MARK: - EDIT CLUB
     func updateClub(_ club: Club) {
-        if let index = clubs.firstIndex(where: { $0.id == club.id }) {
-            clubs[index] = club
-        }
+        guard let idx = clubs.firstIndex(where: { $0.id == club.id }) else { return }
+        clubs[idx] = club
+        saveToStorage()
     }
 
-    // MARK: - STORAGE (Database)
-    private func saveToStorage() {
-        if let encoded = try? JSONEncoder().encode(clubs) {
-            UserDefaults.standard.set(encoded, forKey: storageKey)
-        }
-    }
-
-    private func loadFromStorage() {
-        if let data = UserDefaults.standard.data(forKey: storageKey),
-           let decoded = try? JSONDecoder().decode([Club].self, from: data) {
-            self.clubs = decoded
-        }
+    func deleteClub(_ club: Club) {
+        clubs.removeAll { $0.id == club.id }
+        saveToStorage()
     }
 }
