@@ -8,6 +8,7 @@ struct AdminMenuView: View {
     var body: some View {
         VStack {
             List {
+                // Үйірмелер тізімі
                 ForEach(clubVM.clubs) { club in
                     NavigationLink(destination: EditClubView(club: club)) {
 
@@ -24,12 +25,10 @@ struct AdminMenuView: View {
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
 
-                            // Басталу уақыты — FORMAT қолданамыз
                             Text("Басталу уақыты: \(club.startTime.toReadableDayAndTime())")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
 
-                            // Тіркелген оқушылар саны
                             HStack {
                                 Image(systemName: "person.3.fill")
                                     .foregroundColor(.blue)
@@ -42,6 +41,12 @@ struct AdminMenuView: View {
                         .padding(.vertical, 6)
                     }
                 }
+
+                // 🔥 Жаңа: Статистика экраны
+                NavigationLink("Статистика") {
+                    StatisticsView()
+                }
+                .font(.headline)
             }
             .listStyle(.insetGrouped)
 

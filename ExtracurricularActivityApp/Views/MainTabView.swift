@@ -24,6 +24,8 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Профиль", systemImage: "person.circle")
                 }
+            
+            
         }
     }
 }
