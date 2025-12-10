@@ -1,4 +1,15 @@
 internal import SwiftUI
+import UserNotifications
+
+func requestNotificationPermission() {
+    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+        if granted {
+            print("Notifications allowed")
+        } else {
+            print("Notifications denied")
+        }
+    }
+}
 
 enum UserRole: Hashable {
     case parent
@@ -6,14 +17,18 @@ enum UserRole: Hashable {
 }
 
 struct RootView: View {
-    @EnvironmentObject var authVM: AuthViewModel
-    @EnvironmentObject var adminAuth: AdminAuthViewModel
+
+    // ✔️ ГЛОБАЛЬ МОДЕЛДЕР
+    @StateObject var clubVM = ClubListViewModel()
+    @StateObject var enrollmentVM = EnrollmentViewModel()
+    @StateObject var authVM = AuthViewModel()
+    @StateObject var adminAuth = AdminAuthViewModel()
 
     @State private var path: [UserRole] = []
 
     var body: some View {
         NavigationStack(path: $path) {
-
+            
             RoleSelectionView(path: $path)
                 .navigationDestination(for: UserRole.self) { role in
 
@@ -25,9 +40,7 @@ struct RootView: View {
                         } else {
                             LoginView()
                                 .onChange(of: authVM.isLoggedIn) { logged in
-                                    if logged {
-                                        path.removeAll() // ата-ана үшін басты экран
-                                    }
+                                    if logged { path.removeAll() }
                                 }
                         }
 
@@ -37,19 +50,23 @@ struct RootView: View {
                         } else {
                             AdminLoginView()
                                 .onChange(of: adminAuth.isAdminLoggedIn) { logged in
-                                    if logged {
-                                        path.removeAll() // админ үшін басты экран
-                                    }
+                                    if logged { path.removeAll() }
                                 }
                         }
                     }
                 }
         }
+        // ✔️ Барлық view-ларға модельдерді тарату
+        .environmentObject(clubVM)
+        .environmentObject(enrollmentVM)
+        .environmentObject(authVM)
+        .environmentObject(adminAuth)
+        .onAppear { requestNotificationPermission() }
     }
 }
 
 // ------------------------------------------------
-//  🟦 RoleSelectionView осында болуы міндетті!
+//  🟦 RoleSelectionView
 // ------------------------------------------------
 
 struct RoleSelectionView: View {

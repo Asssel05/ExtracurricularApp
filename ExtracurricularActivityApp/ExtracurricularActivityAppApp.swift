@@ -12,6 +12,7 @@ struct ExtracurricularActivityAppApp: App {
     @StateObject private var enrollmentVM = EnrollmentViewModel()
     @StateObject private var adminAuth = AdminAuthViewModel()
 
+    
     var body: some Scene {
         WindowGroup {
             RootView()

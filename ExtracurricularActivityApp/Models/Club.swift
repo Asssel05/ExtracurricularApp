@@ -18,4 +18,5 @@ struct Club: Codable, Identifiable, Equatable {
     var capacity: Int
     var imageName: String?
     var instructor: String
+    var imageData: Data? = nil
 }

@@ -1,70 +1,126 @@
 //
-//  Untitled.swift
-//  ExtracurricularActivityApp
-//
-//  Created by Shyryn Akylbaeva on 08.12.2025.
+//  AddClubView.swift
 //
 
 internal import SwiftUI
+import PhotosUI
 
 struct AddClubView: View {
-    @EnvironmentObject var clubVM: ClubListViewModel
-    @Environment(\.presentationMode) var presentationMode
 
-    @State private var title: String = ""
-    @State private var description: String = ""
-    @State private var place: String = ""
-    @State private var weeklyDay: String = "Дүйсенбі"
-    @State private var startTime: Date = Date()
-    @State private var capacity: String = "10"
-    @State private var instructor: String = ""
+    @EnvironmentObject var clubVM: ClubListViewModel
+    @Environment(\.dismiss) var dismiss
+
+    @State private var title = ""
+    @State private var description = ""
+    @State private var place = ""
+    @State private var weeklyDay = "Дүйсенбі"
+    @State private var startTime = Date()
+    @State private var capacity = "10"
+    @State private var instructor = ""
+
+    @State private var selectedImage: PhotosPickerItem?
+    @State private var clubImageData: Data?
 
     var body: some View {
-        Form {
-            Section(header: Text("Негізгі")) {
-                TextField("Атауы", text: $title)
-                TextField("Сипаттамасы", text: $description)
-                TextField("Орын (кабинет)", text: $place)
-                TextField("Жетекші", text: $instructor)
-            }
+        ScrollView {
+            VStack(spacing: 20) {
 
-            Section(header: Text("Күн және уақыт")) {
-                Picker("Күні", selection: $weeklyDay) {
-                    Text("Дүйсенбі").tag("Дүйсенбі")
-                    Text("Сейсенбі").tag("Сейсенбі")
-                    Text("Сәрсенбі").tag("Сәрсенбі")
-                    Text("Бейсенбі").tag("Бейсенбі")
-                    Text("Жұма").tag("Жұма")
-                    Text("Сенбі").tag("Сенбі")
-                    Text("Жексенбі").tag("Жексенбі")
+                // MARK: - Image Picker
+                PhotosPicker(selection: $selectedImage, matching: .images) {
+                    ZStack {
+                        if let data = clubImageData,
+                           let ui = UIImage(data: data) {
+                            Image(uiImage: ui)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(height: 180)
+                                .clipped()
+                                .cornerRadius(14)
+                        } else {
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(Color.gray.opacity(0.12))
+                                .frame(height: 180)
+                                .overlay(
+                                    VStack {
+                                        Image(systemName: "photo")
+                                            .font(.largeTitle)
+                                        Text("Сурет жүктеу")
+                                            .foregroundColor(.secondary)
+                                    }
+                                )
+                        }
+                    }
                 }
-                DatePicker("Басталатын уақыт", selection: $startTime, displayedComponents: [.hourAndMinute])
-                    .datePickerStyle(WheelDatePickerStyle())
-            }
+                .onChange(of: selectedImage) { newItem in
+                    Task {
+                        if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                            clubImageData = data
+                        }
+                    }
+                }
 
-            Section(header: Text("Қабілет")) {
-                TextField("Капасити", text: $capacity)
-                    .keyboardType(.numberPad)
-            }
+                // MARK: - Form Fields
+                VStack(spacing: 16) {
 
-            Button("Үйірме қосу") {
-                let cap = Int(capacity) ?? 10
-                // батырма ішіндегі club жасауда:
-                let club = Club(
-                    title: title,
-                    description: description,
-                    place: place,
-                    weeklyDay: weeklyDay,
-                    startTime: startTime,    // Date
-                    capacity: cap,
-                    imageName: nil,
-                    instructor: instructor
-                )
-                clubVM.addClub(club)
-                presentationMode.wrappedValue.dismiss()
+                    Group {
+                        TextField("Атауы", text: $title)
+                            .textFieldStyle(.roundedBorder)
+
+                        TextField("Сипаттама", text: $description)
+                            .textFieldStyle(.roundedBorder)
+
+                        TextField("Өтетін жер", text: $place)
+                            .textFieldStyle(.roundedBorder)
+
+                        TextField("Жетекші", text: $instructor)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    Picker("Күні", selection: $weeklyDay) {
+                        ForEach(["Дүйсенбі","Сейсенбі","Сәрсенбі","Бейсенбі","Жұма","Сенбі","Жексенбі"], id: \.self) {
+                            Text($0)
+                        }
+                    }
+
+                    DatePicker("Уақыты", selection: $startTime, displayedComponents: .hourAndMinute)
+
+                    TextField("Сыйымдылық", text: $capacity)
+                        .keyboardType(.numberPad)
+                        .textFieldStyle(.roundedBorder)
+
+                    Button(action: saveClub) {
+                        Text("Үйірме қосу")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                }
+                .padding(.horizontal)
             }
-            .disabled(title.isEmpty)
+            .padding(.top)
         }
         .navigationTitle("Жаңа үйірме қосу")
+    }
+
+    // MARK: - Save Function
+    private func saveClub() {
+        let cap = Int(capacity) ?? 10
+
+        let newClub = Club(
+            id: UUID().uuidString,
+            title: title,
+            description: description,
+            place: place,
+            weeklyDay: weeklyDay,
+            startTime: startTime,
+            capacity: cap,
+            instructor: instructor,
+            imageData: clubImageData      // ⬅️ Сурет сақталады!
+        )
+
+        clubVM.addClub(newClub)
+        dismiss()
     }
 }
